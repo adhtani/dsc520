@@ -1,0 +1,192 @@
+---
+title: "Assignment 05"
+author: "Taniya Adhikari"
+date: "9/20/2020"
+output: rmarkdown::github_document
+---
+
+**Answer 1:**  
+  
+  
+```{r echo = FALSE, results='asis'}
+
+library(knitr)
+df <- read.csv("Exercise 05/acs-14-1yr-s0201.csv")
+kable(head(df,5),caption = "A table of the Dataset with first 5 values.")
+
+```
+
+According to the Table above 8 elements to this data [1,2]:  
+  
+1. **Id:** *ID of the county. It's a categorical variable which includes integers and characters.*  
+2. **Id2:** *are the last 4 digit of the Id column and a Nominal variable despite of integer value.*  
+3. **Geography:** *It provides area information of the population group. It's a categorical variable.*  
+4. **PopGroupID:** *population group ID, probably nominal variable, but also a variable that is irrelevant.*  
+5. **POPGROUP.display-label:** *only displays value "Total Population".The data are presented as population counts for the total population and various subgroups and percentages. It's a population information.*  
+6. **RacesReported:** *number of responses on question of race for each county. Numerical variable and discrete variable.*  
+7. **HSDegree:** *a percentage of high school degree completion. It's a discrete variable.*  
+8. **BachDegree:** *a percentage of bachelors degree completion. It's a discrete variable.*  
+  
+  
+**Answer 2:**  
+  
+  
+```{r}
+
+str(df)
+
+```
+  
+The above output shows the structure of the dataset. It has 136 observations and 8 variables.
+  
+```{r}
+
+n_row <- nrow(df)
+n_col <- ncol(df)
+
+```
+  
+The number of rows in the dataset is `r n_row`.  
+  
+The number of col in the dataset is `r n_col`.  
+  
+  
+**Answer 3:**  
+  
+  
+```{r}
+summary(df$HSDegree)
+
+```
+
+```{r}
+
+library(ggplot2)
+theme_set(theme_classic())
+
+## Histogram Plot of HSDegree
+ggplot(df, aes(x=HSDegree)) + 
+  geom_histogram(bins=40,color="black", fill="lightblue") + ggtitle("HSDegree Histogram Plot with Bins 40") + 
+  xlab("HS Degree Completion (%)") + ylab("Number of Counties")
+
+```
+  
+  
+**Answer 4:**  
+  
+  
+Based on Histogram the model the distribution is asymmetrical making it slightly skewed to the left. A normal distribution has to be symmetrical and bell shaped, thus it is not normal distribution or bell-shaped. The data is skewed to the left with the minimum value far left as 62.2% (reference from summary statistics) and median(88.70) slightly greater than mean(87.63).  
+  
+  
+```{r}
+## Histogram with normal curve layered
+ggplot(df, aes(x=HSDegree)) + 
+  geom_histogram(aes(y=..density..), bins=40,color="black", fill="lightblue") +
+  ggtitle("HSDegree Histogram Plot with Normal Curve") + 
+  xlab("HS Degree Completion (%)") + ylab("Number of Counties") +
+  xlim(60,120) + 
+  stat_function(fun = dnorm, args = list(mean = mean(df$HSDegree), sd = sd(df$HSDegree)), color = "darkblue")
+```
+    
+No normal distribution does not look like a good fit for this data, because not all data points falls in the normal curve.  
+  
+**Answer 5:**  
+  
+  
+```{r}
+
+## probability plot using ggplot and stat_qq()
+ggplot(df, aes(sample=HSDegree)) +
+  ggtitle("Probability plot of HSDegree") + 
+  xlab("Theoretical") + ylab("HSDegree") +
+  stat_qq(colour="orange") + 
+  stat_qq_line(color="black")
+  
+
+```
+  
+Density plot of Kernel Density Plot  
+  
+```{r}
+##Kernel Density curve with normal curve
+ggplot(df, aes(x=HSDegree)) + 
+  geom_density(bins=40,color="black", fill="lightblue") +
+  ggtitle("Kernel Density curve for HSDegree with Normal curve") +
+  xlab("HS Degree Completion (%)") + ylab("Density") +
+  xlim(60,120) + 
+  stat_function(fun = dnorm, args = list(mean = mean(df$HSDegree), sd = sd(df$HSDegree)), color = "black")
+
+```
+  
+  
+**Answer 6:**  
+  
+  
+Looking at both probability plot and kernel density curve compared with normal curve, the distribution is not normal.  
+In probability plot, normal distribution suppose to be straight diagonal, however exponential curve is an indication of asymmetrical and skewed distribution. It is skewed negative because data is more dispersed towards the left [5].  
+Kernel density curve layered with normal curve also shows that distribution is skewed negative with values outside of normal curve on the left.  
+  
+  
+**Answer 7:**  
+  
+```{r}
+library(pastecs)
+clean_df = subset(df, select = -c(Id2,PopGroupID,POPGROUP.display.label))
+desc_stat <- stat.desc(clean_df)
+kable(desc_stat, digits =2,caption = "Descriptive Statistics Table")
+```
+  
+  
+**Answer 8:**  
+  
+  
+```{r}
+
+library(moments)
+skew <- skewness(df$HSDegree)
+kurt <- kurtosis(df$HSDegree)
+e_kurtosis <- kurtosis(df$HSDegree) - 3
+
+
+HSDegree_Zscores <-(df$HSDegree -mean(df$HSDegree))/sd(df$HSDegree)
+new_df <- cbind(clean_df,HSDegree_Zscores)
+kable(head(new_df,5),caption = "Dataset with z-scores appended")
+
+## density curve for z-scores
+ggplot(new_df, aes(x=HSDegree_Zscores)) +
+  geom_density(bins=40,color="black") + 
+  ggtitle("KDensity curve for z-scores") +
+  xlab("z-scores") + ylab("Density") +
+  xlim(-4,4)
+summary(new_df$HSDegree_Zscores)
+```
+  
+  
+The skewness is `r skew`.  
+The kurtosis is `r kurt`.  
+The kurtosis for normal distribution is 3, so excess kurtosis is `r e_kurtosis`
+  
+  
+Skewness between -0.5 and 0.5 then data is approximately normal. For HSDegree distribution, skewness is -1.69, this means data is highly and negatively skewed [3].  
+  
+    
+Kurtosis measures how tails of distribution differs from normal curve. It measures the presence of outliers. High kurtosis means data has outliers [3,4]. For HSDegree kurtosis is 7.46 which is higher than 3. Thus kurtosis is Leptokurtic and heavy tailed [3,4].  
+  
+  
+Z-scores tells you exactly how many standard deviations away from the mean is a particular datapoint. z-score of 0 means exactly at mean. Any z-scores beyond -2 or 2 is considered unusual [8]. Since our distribution is highly skewed and minimum z-score is -4.9 indicating we have data points that are 5 standard deviation below mean.
+  
+  
+Changing the sample size does impact all three statistics. Central limit theorem states, that the sampling distribution approaches a normal distribution as the sample size gets larger, regardless of the sampling distribution.Larger data will make the distribution shift towards the normal distribution and will shift the skew and kurtosis values closer to normal[7]. changing the sample size will also change mean and standard deviations which will impact the z-scores of each value.  
+  
+  
+**Reference**  
+  
+  
+1. https://www.census.gov/prod/2004pubs/04statab/pop.pdf  
+2. Bureau, U. (2020, September 03). Understanding Geographic Identifiers (GEOIDs). Retrieved September 21, 2020, from https://www.census.gov/programs-surveys/geography/guidance/geo-identifiers.html  
+3. Dugar, D. (2020, July 18). Skew and Kurtosis: 2 Important Statistics terms you need to know in Data Science. Retrieved September 21, 2020, from https://codeburst.io/2-important-statistics-terms-you-need-to-know-in-data-science-skewness-and-kurtosis-388fef94eeaa  
+4. Kurtosis - Definition, Excess Kurtosis, and Types of Kurtosis. (2020, May 15). Retrieved September 21, 2020, from https://corporatefinanceinstitute.com/resources/knowledge/other/kurtosis/  
+5. Scibilia, B. (n.d.). A Simple Guide to Probability Plots. Retrieved September 21, 2020, from https://blog.minitab.com/blog/applying-statistics-in-quality-projects/a-simple-guide-to-probability-plots  
+6. Admin. (2020, September 15). Central Limit Theorem Formula with Solved Examples. Retrieved September 21, 2020, from https://byjus.com/central-limit-theorem-formula/  
+7. Are the Skewness and Kurtosis Useful Statistics? (2020, April 25). Retrieved September 21, 2020, from https://www.spcforexcel.com/knowledge/basic-statistics/are-skewness-and-kurtosis-useful-statistics  
+8. Z-Scores: A note done for admissions board. (n.d.). Retrieved September 21, 2020, from http://www.comfsm.fm/~dleeling/statistics/s63/zscore.html  
