@@ -2,7 +2,7 @@
 title: "Assignment 05"
 author: "Taniya Adhikari"
 date: "9/20/2020"
-output: html_document
+output: rmarkdown::github_document
 ---
 
 **Answer 1:**  
