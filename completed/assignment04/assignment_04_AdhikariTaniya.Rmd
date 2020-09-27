@@ -14,7 +14,7 @@ My Top 3 favorite foods are:
   3. Nepalese Momos  
   
 ## Images
-![All Cases (Log Plot)](completed/assignment04/plots/10-all-cases-log.png)
+![All Cases (Log Plot)](/Users/taniy/Documents/GitHub/dsc520/completed/assignment04/plots/10-all-cases-log.png)
 
 
 ## Add a Quote
