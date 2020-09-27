@@ -2,7 +2,7 @@
 title: "Exercise 7"
 author: "Taniya Adhikari"
 date: '2020-09-26'
-output: html_document
+output: rmarkdown::github_document
 ---
 
 # Markdown Basics
