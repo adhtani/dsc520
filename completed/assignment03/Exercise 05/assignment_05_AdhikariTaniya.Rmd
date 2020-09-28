@@ -16,11 +16,11 @@ kable(head(df,5),caption = "A table of the Dataset with first 5 values.")
 
 ```
 
-According to the Table above 8 elements to this data [1,2]:  
+>According to the Table above 8 elements to this data [1,2]:  
   
-1. **Id:** *ID of the county. It's a categorical variable which includes integers and characters.*  
-2. **Id2:** *are the last 4 digit of the Id column and a Nominal variable despite of integer value.*  
-3. **Geography:** *It provides area information of the population group. It's a categorical variable.*  
+>1. **Id:** *ID of the county. It's a categorical variable which includes integers and characters.*  
+>2. **Id2:** *are the last 4 digit of the Id column and a Nominal variable despite of integer value.*  
+>3. **Geography:** *It provides area information of the population group. It's a categorical variable.*  
 4. **PopGroupID:** *population group ID, probably nominal variable, but also a variable that is irrelevant.*  
 5. **POPGROUP.display-label:** *only displays value "Total Population".The data are presented as population counts for the total population and various subgroups and percentages. It's a population information.*  
 6. **RacesReported:** *number of responses on question of race for each county. Numerical variable and discrete variable.*  
@@ -75,7 +75,7 @@ ggplot(df, aes(x=HSDegree)) +
 **Answer 4:**  
   
   
-Based on Histogram the model the distribution is asymmetrical making it slightly skewed to the left. A normal distribution has to be symmetrical and bell shaped, thus it is not normal distribution or bell-shaped. The data is skewed to the left with the minimum value far left as 62.2% (reference from summary statistics) and median(88.70) slightly greater than mean(87.63).  
+>Based on Histogram the model the distribution is asymmetrical making it slightly skewed to the left. A normal distribution has to be symmetrical and bell shaped, thus it is not normal distribution or bell-shaped. The data is skewed to the left with the minimum value far left as 62.2% (reference from summary statistics) and median(88.70) slightly greater than mean(87.63).  
   
   
 ```{r}
@@ -162,9 +162,9 @@ summary(new_df$HSDegree_Zscores)
 ```
   
   
-The skewness is `r skew`.  
-The kurtosis is `r kurt`.  
-The kurtosis for normal distribution is 3, so excess kurtosis is `r e_kurtosis`
+>The skewness is `r skew`.  
+>The kurtosis is `r kurt`.  
+>The kurtosis for normal distribution is 3, so excess kurtosis is `r e_kurtosis`
   
   
 Skewness between -0.5 and 0.5 then data is approximately normal. For HSDegree distribution, skewness is -1.69, this means data is highly and negatively skewed [3].  
@@ -173,10 +173,10 @@ Skewness between -0.5 and 0.5 then data is approximately normal. For HSDegree di
 Kurtosis measures how tails of distribution differs from normal curve. It measures the presence of outliers. High kurtosis means data has outliers [3,4]. For HSDegree kurtosis is 7.46 which is higher than 3. Thus kurtosis is Leptokurtic and heavy tailed [3,4].  
   
   
-Z-scores tells you exactly how many standard deviations away from the mean is a particular datapoint. z-score of 0 means exactly at mean. Any z-scores beyond -2 or 2 is considered unusual [8]. Since our distribution is highly skewed and minimum z-score is -4.9 indicating we have data points that are 5 standard deviation below mean.
+>Z-scores tells you exactly how many standard deviations away from the mean is a particular datapoint. z-score of 0 means exactly at mean. Any z-scores beyond -2 or 2 is considered unusual [8]. Since our distribution is highly skewed and minimum z-score is -4.9 indicating we have data points that are 5 standard deviation below mean.
   
   
-Changing the sample size does impact all three statistics. Central limit theorem states, that the sampling distribution approaches a normal distribution as the sample size gets larger, regardless of the sampling distribution.Larger data will make the distribution shift towards the normal distribution and will shift the skew and kurtosis values closer to normal[7]. changing the sample size will also change mean and standard deviations which will impact the z-scores of each value.  
+>Changing the sample size does impact all three statistics. Central limit theorem states, that the sampling distribution approaches a normal distribution as the sample size gets larger, regardless of the sampling distribution.Larger data will make the distribution shift towards the normal distribution and will shift the skew and kurtosis values closer to normal[7]. changing the sample size will also change mean and standard deviations which will impact the z-scores of each value.  
   
   
 **Reference**  
