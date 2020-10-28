@@ -1,0 +1,384 @@
+---
+title: "Exercise 12"
+author: "Taniya Adhikari"
+date: "10/3/2020"
+output: rmarkdown::github_document
+---
+
+
+Importing the dataset
+  
+```{r, include=FALSE}
+
+
+library(readxl)
+housing_df <- read_excel("data/week-6-housing.xlsx")
+str(housing_df)
+
+```
+  
+We have 24 variables in this dataframe.
+
+1. **Sale Date** which is in date format. Can be considered as qualitative data and referred to the sale date of the house.  
+2. **Sale Price** is a quantitative and continuous variable and is refereed to sale price of the house.  
+3. **sale_reason** is integer but is a nominal and qualitative variable , referred to the reason of selling the house.  
+4. **sale_instrument** is integer but is a nominal and qualitative variable.  
+5. **sale_warning** is NA means it's missing values, seems like a qualitative variable.  
+6. **sitetype** is a qualitative variable, referred to the type of site.  
+7. **addr_full** is a qualitative variable referred to the address of the house.  
+8. **zip5** is integer but it is a qualitative and ordinal variable because it's a zip code of the house location.  
+9. **ctyname** is a qualitative variable and the city of house.  
+10.**postalctyn** is a postal city name and a qualitative variable.  
+11.**lon** is integer but qualitative and nominal variable and referred to the longitude coordinates.  
+12.**lat** is integer but qualitative and nominal variable and referred to the latitude coordinates.  
+13.**building_grade** is integer but qualitative and ordinal variable.  
+14.**square_feet_total_living** is quantitative continuous variable and referred to the size of the house in square ft.  
+15.**bedrooms** is quantitative discrete variable and referred to the number of bedrooms in the house.  
+16.**bath_full_count** is quantitative discrete variable and referred to the number of full bathrooms in the house.  
+17.**bath_half_count** is quantitative discrete variable and referred to the number of half bathrooms in the house.  
+18.**bath_3qtr_count** is quantitative discrete variable and referred to the number of 3qtr bathrooms in the house.  
+19.**year_built** is quantitative discrete variable and referred to the year of house built.  
+20.**year_renovated** is quantitative discrete variable and referred to the year of house was renovated with 0 being not renovated.  
+21.**current_zoning** is a qualitative variable, referred to the type of zoning.  
+22.**sq_ft_lot** is quantitative continuous variable and referred to the size of the total lot in square ft.  
+23.**prop_type** is a qualitative variable, referred to the property type.  
+24.**present_use** is a quantitative variable not sure what it is referred to.  
+    
+**Now that we have establish the type of variables, I will be performing doing some of the EDA steps to clean the data**  
+
+**Dealing with Missing Values or Duplicate values**   
+   
+```{r, include=FALSE}
+library(tidyverse)
+
+## deleting variable sale_warning and ctyname because it has lot of missing values.
+housing_df = subset(housing_df, select = -c(sale_warning, ctyname))
+
+#removes duplicate rows based on all columns
+housing_df <- housing_df %>% distinct()
+
+## removing variables that adds little to no value to the dataset
+clean_df <-subset(housing_df, select = -c(addr_full, zip5, postalctyn, lon, lat,prop_type))
+
+```
+  
+**a. Explain why you chose to remove data points from your ‘clean’ dataset.**   
+  
+**Answer a**  
+First I removed the variables that has lot of missing values i.e **sale_warning** and **ctyname**. Usually for missing values rows are removed instead of the whole variable, but in this case, deleting rows will cause loss of data points that are significant.
+Then I removed any duplicate values by keeping the distinct or unique values for each columns.Finally, I removed following variables:  
+a. **addr_full**: they are unique home addresses for each sale (some were repeated because same house was sold more than once) but they are still unique, so it is neither categorical nor numerical data.  
+b. **zip5**: they are also referred to the zipcode of the city where the housing data belong to, adds little value to the sale price.  
+c. **postalctyn**: is a Level 1 variable with only single value in it.  
+d. **lon & lat**: I removed longitudes and latitudes coordinates because it is also the conversion of house location, also unique for each house address.  
+e. **prop_type**: Removed it because it consists of only one value.  
+  
+  
+**b.Create two variables; one that will contain the variables Sale Price and Square Foot of Lot (same variables used from previous assignment on simple regression) and one that will contain Sale Price and several additional predictors of your choice. Explain the basis for your additional predictor selections.**  
+   
+
+```{r, include=FALSE}
+## Model 1
+names(clean_df) <- make.names(names(clean_df))
+RegModel.1 <- lm(Sale.Price~sq_ft_lot, data=clean_df)
+```
+
+```{r, include=FALSE}
+library(Rcmdr)
+library(QuantPsyc)
+
+## Model Test
+RegModel.Test1 <- 
+  lm(Sale.Price~bath_3qtr_count+bath_full_count+bath_half_count+bedrooms+building_grade+present_use+sale_instrument+sale_reason+sq_ft_lot+square_feet_total_living+year_built+year_renovated,
+   data=clean_df)
+stepwise(RegModel.Test1, direction='forward', criterion='AIC') 
+
+RegModel.Test2 <- lm(formula = Sale.Price ~ square_feet_total_living + year_built + 
+    sale_reason + building_grade + present_use + sq_ft_lot + 
+    year_renovated + bath_3qtr_count, data = clean_df)
+
+
+## Assumption 1 Variable Types
+str(clean_df)
+
+##Assumption 2 Non-zero variance
+apply(clean_df, 2, var)
+
+## Assumption 3 Multicollinearity
+cor(clean_df[,c("bath_3qtr_count","present_use","sale_reason","sq_ft_lot",
+  "square_feet_total_living","year_built","year_renovated", "building_grade")], use="complete")
+
+lm.beta(RegModel.Test2)
+
+RegModel.Test3 <- lm(formula = Sale.Price ~ square_feet_total_living + year_built + 
+    sale_reason + present_use + sq_ft_lot + 
+    year_renovated + bath_3qtr_count, data = clean_df)
+lm.beta(RegModel.Test3)
+
+## Final Model 2
+RegModel.2 <- lm(formula = Sale.Price ~ square_feet_total_living + year_built + sq_ft_lot, data = clean_df)
+
+```
+  
+**Answer b**     
+Theoretically, Square ft of the lot, size of the house, Number of bedrooms and Number of bathrooms in a house, age of the house, year built and maintenance can affect the price of the house. First, I built a test model and applied stepwise regression to choose the list of important variables for the model
+
+Then I check for assumptions and removed any variables that didn't meet assumptions.  
+All Variables are either categorical or quantitative and has non-zero variance.  
+  
+For assumption 2, I kept the threshold of 0.5 if r was above 0.5 then I would assume that the two predictor variables are highly correlated. Variables square_feet_total_living and building_grade has higher linearity, so I check for beta coefficient and found building_grade has lower coefficient so I removed that variable.  
+   
+My Model is violating homoscedasticity, so I will have to further analyze the model.  
+   
+Following this I used beta coefficient to pick the important predictor variables and removed variables with weaker coefficients (including negative coefficient.  
+   
+My final Model is:  
+    
+_Sale.Price = -5570635.55907 + 163.82704(square_feet_total_living) + 2925.72914(year_built) + 0.34373(sq_ft_lot)_  
+  
+**c. Execute a summary() function on two variables defined in the previous step to compare the model results. What are the R2 and Adjusted R2 statistics? Explain what these results tell you about the overall model. Did the inclusion of the additional predictors help explain any large variations found in Sale Price?**  
+  
+```{r, warning=FALSE, echo=FALSE}
+## Model 1
+summary(RegModel.1)
+
+## Model 2
+summary(RegModel.2)
+```
+   
+**Answer c**
+Comparing Model 1 to Model 2. R-squared and Adjusted R-Squared increased with the inclusion of additional predictors. Overall Model, the change of $R^2$ is significant. Since the real estate appreciates over time and size of the house also matters, adding more variables helped in undertanding Sale Prices.  
+  
+**Model 1**  
+   $$r^2 = 0.0142$$  
+   $$r^2* = 0.01412$$  
+   
+**Model 2**   
+   $$r^2 = 0.219$$  
+   $$r^2* = 0.2188$$  
+  
+**d. Considering the parameters of the multiple regression model you have created. What are the standardized betas for each parameter and what do the values indicate?**  
+
+```{r}
+## calculating beta coefficients
+lm.beta(RegModel.2)
+
+```
+  
+**Answer d**  
+A standardized beta coefficient compares the strength of the effect of each individual independent variable to the dependent variable. The higher the absolute value of the beta coefficient, the stronger the effect.  
+  
+**square_feet_total_living** has the highest absolute value of beta coefficient indicating strongest effect, **year_built** has the second highest beta coefficient indicating has the moderate effect on the dependent variable and **sq_ft_lot** has the lowest beta coefficient indicating weakest effect on dependent variables.  
+  
+**e. Calculate the confidence intervals for the parameters in your model and explain what the results indicate.**  
+   
+```{r}
+
+confint(RegModel.2)
+
+```
+
+**Answer e**    
+The above confidence interval indicates that the estimates of the current model likely to represent true population values. The 95% of these samples boundaries will contain the true value of _b_. Since, none of the confidence interval crosses zero it is safe to say it is a significant model.   
+   
+
+**f. Assess the improvement of the new model compared to your original model (simple regression model) by testing whether this change is significant by performing an analysis of variance.**  
+  
+```{r}
+
+## Anova test for Model 1
+AnovaModel.1<-aov(RegModel.1)
+summary(AnovaModel.1)
+
+## Anova test for Model 2
+AnovaModel.2<-aov(RegModel.2)
+summary(AnovaModel.2)
+```
+  
+**Answer f**    
+The p-value for Model 1 is less that 0.001 percent, indicating that sq_ft_lot impact the sale price. However, in two-way ANOVA of Model 2 indicates square_feet_total_living and year_built has higher impact compared to sq_ft_lot in multiple regression model with p-values significantly lower. It is also possible to that independent variables have interaction effect rather than additive. To check this:
+
+```{r}
+## checking for variable interactions
+AnovaModel.3<-aov(formula = Sale.Price ~ square_feet_total_living*year_built*sq_ft_lot, data = clean_df)
+summary(AnovaModel.3)
+```
+
+In the output, the square_feet_total_living:year_built has a high p-value, which indicates there is not much variation that can be explained by the interaction of square_feet_total_living and year_built.  
+  
+**g. Perform casewise diagnostics to identify outliers and/or influential cases, storing each function's output in a dataframe assigned to a unique variable name.**  
+
+**Answer g**  
+I created another dataframe name Model_df with just the variables from my model 2, Sale.Price, square_feet_total_living, year_built and sq_ft_lot to add casewise diagnostics variables. 
+   
+```{r, warning=FALSE}
+
+square_feet_total_living <-clean_df$square_feet_total_living
+year_built <- clean_df$year_built
+sq_ft_lot <- clean_df$sq_ft_lot
+Sale.Price <- clean_df$Sale.Price
+
+model_df <-data.frame("Sale.Price" = Sale.Price, "square_feet_total_living" = square_feet_total_living, "year_built" = year_built, "sq_ft_lot" = sq_ft_lot)
+
+## casewise diagnostics
+
+## Outliers detection - Residuals
+model_df$residuals<-resid(RegModel.2)
+model_df$standardized.residuals<- rstandard(RegModel.2)
+model_df$studentized.residuals<-rstudent(RegModel.2)
+
+## Influential cases
+model_df$cooks.distance<-cooks.distance(RegModel.2)
+model_df$dfbeta<-dfbeta(RegModel.2) 
+model_df$dffit<-dffits(RegModel.2) 
+model_df$leverage<-hatvalues(RegModel.2) 
+model_df$covariance.ratios<-covratio(RegModel.2)
+
+```
+  
+**h. Calculate the standardized residuals using the appropriate command, specifying those that are +-2, storing the results of large residuals in a variable you create.**  
+  
+**Answer h**  
+
+```{r echo=TRUE, results ='hide'}
+model_df$standardized.residuals > 2 | model_df$standardized.residuals < -2
+model_df$large.residual <- model_df$standardized.residuals > 2 | model_df$standardized.residuals < -2
+
+```
+  
+**i. Use the appropriate function to show the sum of large residuals.**  
+  
+**Answer i**  
+```{r}
+total_large_residuals <- sum(model_df$large.residual)
+(total_large_residuals/nrow(model_df))*100
+```
+  
+There are 334 cases which has large residuals out of n = 12825. Meaning only 2.6% of cases are outside of the limits.  
+  
+  
+**j. Which specific variables have large residuals (only cases that evaluate as TRUE)?**  
+  
+**Answer j**  
+  
+Below table shows first 6 values with large residuals  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(DALEX)
+kable(head(model_df[model_df$large.residual, c("Sale.Price", "square_feet_total_living", "year_built", "sq_ft_lot", "standardized.residuals")]))
+
+exp_lm <- explain(RegModel.2, data = clean_df, y = clean_df$Sale.Price)
+diagnostics_lm  <-model_diagnostics(exp_lm)
+plot(diagnostics_lm)
+```
+  
+   
+**k. Investigate further by calculating the leverage, cooks distance, and covariance rations. Comment on all cases that are problematics.**  
+    
+   
+**Answer k**  
+   
+**Cooks Distance**   
+```{r, echo=FALSE}
+model_df$large.cookdistance <- model_df$cooks.distance > 1
+kable(model_df[model_df$large.cookdistance, c("Sale.Price", "square_feet_total_living", "year_built", "sq_ft_lot")])
+
+```
+    
+There is one case where cooks distance (1.176) is greater than 1. The sale price of this house is 440,000 but the sq_ft_lot is 132,7090 which looks abnormally higher.  
+  
+**Average Leverage**    
+  
+The average leverage($leverage = 4/n$) calculated is 00.0003118908, so 3 times higher value is 0.0009356725. we are looking for values anything greater than that. In the table below all values with Large Leverage is at least 3 times greater than the calculated average leverage. That means they are influential cases.  
+  
+Below Table shows the first 6 values with Hat Values larger than calculated average leverage.
+```{r, echo=FALSE}
+
+avg_leverage <- 3*(4/nrow(model_df))
+model_df$large.leverage <- model_df$leverage > avg_leverage
+
+```
+  
+```{r echo=FALSE}
+kable(head(model_df[model_df$large.leverage, c("Sale.Price", "square_feet_total_living", "year_built", "sq_ft_lot", "leverage")]))
+```
+
+**Covariance ratio**   
+   
+The Covariance Ratio should be greater than $1 +[3(k+1)/n]$ but if the covariance ratio is less than $1 -[3(k+1)/n]$ then deleting the case will improve the precision of some of the model's parameter. our calculated covariance ratio is 0.9990643. Below is the table with all the values less than the calculated CVR.  
+  
+Below table shows the first 6 values with covariance ratio less than the calculated covariance ratio threshold.   
+```{r echo=FALSE}
+cvr <- 1 - (3*(4/nrow(model_df)))
+model_df$large.cvr <- model_df$covariance.ratios < cvr
+kable(head(model_df[model_df$large.cvr, c("Sale.Price", "square_feet_total_living", "year_built", "sq_ft_lot", "covariance.ratios")]))
+```
+   
+**l. Perform the necessary calculations to assess the assumption of independence and state if the condition is met or not.**  
+
+```{r echo=FALSE, results=TRUE}
+library(lmtest)
+dwtest(RegModel.2)
+```
+  
+Durbin-Watson Test is test for independence. There shouldn't be any autocorrelation. Any values less than 1 or greater than 3 is not favored and is a concern. The above test indicates DW = 0.56099. Indicating that there is an autocorrelation. Independence Assumption is violated.  
+  
+  
+**m. Perform the necessary calculations to assess the assumption of no multicollinearity and state if the condition is met or not.**
+
+```{r echo=FALSE, results=TRUE}
+# correlation matrix for predictor variables
+cor(clean_df[,c("square_feet_total_living","year_built","sq_ft_lot")], use="complete")
+```
+  
+There is some correlation between the predictor variables. however, typically anything above 0.5 is considered strong linear relationship, and less than 0.5 is considered week relationship. In this case all the variables has r less than 0.5.  
+  
+**n. Visually check the assumptions related to the residuals using the plot() and hist() functions. Summarize what each graph is informing you of and if any anomalies are present.**  
+   
+**Answer n**  
+
+```{r echo=FALSE, results=TRUE}
+## Check for homoscedasticity 
+par(mfrow=c(2,2))
+plot(RegModel.2)
+par(mfrow=c(1,1))
+
+hist(model_df$studentized.residuals)
+```
+
+```{r echo=FALSE, results=TRUE}
+library(ggplot2)
+## Histogram of studentized residuals
+model_df$fitted <- RegModel.2$fitted.values
+histogram <- ggplot(model_df, aes(studentized.residuals)) +
+  geom_histogram(aes(y=..density..), binwidth = .5, colour="black", fill="white")+
+  labs(x="studentized Residual", y="Density")
+histogram + stat_function(fun = dnorm, args=list(mean=mean(model_df$studentized.residuals, na.rm=TRUE), sd=sd(model_df$studentized.residuals, na.rm=TRUE)), color="red", size=1) + ggtitle("Histogram of Studentized Residuals with Normal Curve")
+
+qplot(sample = model_df$studentized.residuals, stat="qq") + labs(x="Theoretical Values", y="Observed Values")
+
+scatter <-ggplot(model_df,aes(fitted,studentized.residuals))
+scatter + geom_point() +geom_smooth(method="lm",colour="Blue")+
+  labs(x = "Fitted Values", y="Studentized Residual") +
+  ggtitle("Residual Scatter Plot")
+
+```
+  
+The above residuals vs Fitted plot has a funnel shape indicating that there is heteroscedasticity in the data. It also shows that it violated the assumption of linearity.   
+  
+The q-q plot shows up deviations from normality, the straight line indicates normal distribution, the data set is violating the assumption of normality.   
+  
+The Histogram also shows that the residuals distribution is slightly skewed and therefore not normal.
+  
+**o. Overall, is this regression model unbiased? If an unbiased regression model, what does this tell us about the sample vs. the entire population model?**  
+  
+**Answer o**  
+This model is definitely unbiased with multiple assumptions violated (Normality, linearity, Independence). This model can only be used to draw conclusions for sample only and cannot be generalized for population. It either needs data transformation of Robust Regression.  
+   
+   
+**References**  
+1. https://www.scribbr.com/statistics/anova-in-r/  
+2. https://www.scribbr.com/statistics/linear-regression-in-r/  
+3. https://statisticsbyjim.com/regression/identifying-important-independent-variables/  
+4. https://www.homelight.com/blog/real-estate-property-value/  
+

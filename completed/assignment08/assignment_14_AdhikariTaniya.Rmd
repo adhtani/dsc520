@@ -1,0 +1,105 @@
+---
+title: "Exercise 14"
+author: Taniya Adhikari"
+date: 10/26/2020
+output: word_document
+---
+
+
+**Fit a logistic regression model to the binary-classifier-data.csv dataset from the previous assignment.**  
+  
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+
+library(tinytex)
+classifier_df <- read.csv("data/binary-classifier-data.csv")
+model.1 = glm(label ~ . , family = binomial, data = classifier_df)
+summary(model.1)
+```
+
+**a. What is the accuracy of the logistic regression classifier?**  
+   
+**Answer a**  
+  
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+library(knitr)
+nrow(classifier_df)
+classifier_df$predicted = predict(model.1, newdata=classifier_df, type="response")
+kable(table(classifier_df$label, classifier_df$predicted> 0.5))
+```
+
+The Model isn't very accurate. Out of 715 predicted probability less than 0.5, 40% of those values are labeled as 1 which is quite high. Similarly, predicted probability greater than 0.5 has 43% of values labeled as 0.  
+   
+**b. How does the accuracy of the logistic regression classifier compare to the nearest neighbors algorithm?**  
+   
+**Answer b**  
+  
+```{r, message=FALSE, warning=FALSE}
+
+library(class)
+knn.data <- sample(1:nrow(classifier_df),size=nrow(classifier_df)*0.7,replace = FALSE)
+
+## the normalization function is created
+nor <-function(x) { (x -min(x))/(max(x)-min(x))   }
+
+## Run nomalization for predictor variables.
+classifier_norm <- as.data.frame(lapply(classifier_df[,c(2,3)], nor))
+summary(classifier_norm)
+
+train.data <- classifier_norm[knn.data,] # 70% training data
+
+test.data <- classifier_norm[-knn.data,] # remaining 30% test data
+
+## the creating dataframes for "credibility"
+
+train.labels <- classifier_df[knn.data,1]
+
+test.labels  <-classifier_df[-knn.data,1]
+
+
+k = round(sqrt(NROW(train.labels)), digits = 0)
+
+model.knn =  knn(train=train.data, test=test.data, cl=train.labels, k=k)
+
+## create confusion matrix
+tab <- table(model.knn,test.labels)
+ 
+```
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+
+## this function divides the correct predictions by total number of predictions that tell us how accurate teh model is.
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tab)
+
+```
+This KNN Model is much better at predicting values than logistic model. with accuracy of 98%.  
+   
+   
+**c. Why is the accuracy of the logistic regression classifier different from that of the nearest neighbors?**  
+  
+**Answer c**  
+  
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+library(ggplot2)
+## Logistic Model Plot
+ggplot(data = classifier_df, aes(x = x, y = y, color = predicted > 0.5))+
+  geom_point() + ggtitle("Logistic Regression Model: Predicted Values")
+
+## Knn Model PLot
+test.data$predicted <- model.knn
+ggplot(data = test.data, aes(x = x, y = y, color = predicted == test.labels)) + 
+  geom_point() + 
+  ggtitle("KNN Model: Predicted Values")
+```
+  
+In the above Plot of Logistic Regression of Predicted Values, we see that data is randomly dispersed into multiple clusters. Plot doesn't seem to show any linear relationship. instead True and False values are clustered together. The two variables alone doesn't seem to work well in  this model. When the data is non-linear like this one, knn models works best because it trains the model first and then it predicts the value after which helps minimize the error. The more we train the model with the data the better the prediction it gets.  
+   
+    
+**Referrences**  
+  
+1. https://www.edureka.co/blog/knn-algorithm-in-r/
+2. https://rstudio-pubs-static.s3.amazonaws.com/506235_848f078b245f4fe885cea65f1528ad79.html#fitting-a-knn-model
+3. http://www.sthda.com/english/articles/36-classification-methods-essentials/151-logistic-regression-essentials-in-r/#making-predictions
+
+
+

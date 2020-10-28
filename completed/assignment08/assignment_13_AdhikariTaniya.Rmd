@@ -1,0 +1,52 @@
+---
+title: "Exercise 13"
+author: Taniya Adhikari"
+date: 10/25/2020
+output: word_document
+---
+
+## **Data Set**  
+   
+   
+   
+   
+```{r, echo = FALSE, warning=FALSE}
+library(knitr)
+library(foreign)
+library(tinytex)
+surgery_df <- read.arff("data/ThoraricSurgery.arff")
+kable(head(surgery_df,5),caption = "Table 13.1: A table of the Dataset with first 5 values.")
+
+```
+    
+        
+## **Summary Statistics**   
+    
+       
+         
+```{r, echo = FALSE, warning=FALSE}
+model.1 <- glm(Risk1Yr ~ ., family = binomial, data = surgery_df)
+summary(model.1)
+```
+
+      
+         
+           
+According to the summary, variable PRE9 - Dyspnoea before surgery being True and PRE14 - size of the original tumour OC14 are highly significant variables with p-value < 0.01 and has greater impact of Risk1Yr being True. PRE17 - Type 2 DM - diabetes mellitus being True and PRE30 - Smoking being True are also significant with p-value < 0.05. All the other variables has p-value between 0.05 < p-value < 1, indicating lesser significance. The value of the deviance for this model (341.19) is also less than the null model (395.61).  
+   
+       
+         
+          
+          
+```{r, echo = FALSE, warning=FALSE}
+library(pander)
+surgery_df$predicted = predict(model.1, newdata=surgery_df, type="response")
+pander(table(surgery_df$Risk1Yr, surgery_df$predicted> 0.5))
+
+```
+     
+       
+         
+          
+           
+It seems like the model is good at predicting false values, with the accuracy rate of 85.3%. However the accuracy rate of True values of predicting the 23.07%. Suggests that model needs improvement, maybe needs dimensionality reduction.  
