@@ -1,0 +1,246 @@
+---
+title: "Exercise 15: Introduction to Machine Learning"
+author: Taniya Adhikari"
+date: 11/1/2020
+output: rmarkdown::github_document
+---
+
+Importing the dataset     
+     
+     
+    
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+library(tinytex)
+library(knitr)
+binary_df <- read.csv("data/binary-classifier-data.csv")
+trinary_df <- read.csv("data/trinary-classifier-data.csv")
+binary_df$label <- as.factor(binary_df$label)
+trinary_df$label <- as.factor(trinary_df$label)
+```
+Plot the data from each dataset using a scatter plot.       
+      
+       
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+library(ggplot2)
+ggplot(data = binary_df, aes(x = x, y = y, color = label)) + 
+  geom_point() + 
+  ggtitle("Scatter Plot Binary Data")
+ggplot(data = trinary_df, aes(x = x, y = y, color = label)) + 
+  geom_point() + 
+  ggtitle("Scatter Plot Trinary Data")
+```
+     
+    
+Fit a k nearest neighbors model for each dataset for k=3, k=5, k=10, k=15, k=20, and k=25. Compute the accuracy of the resulting models for each value of k. Plot the results in a graph where the x-axis is the different values of k and the y-axis is the accuracy of the model.    
+   
+Binary Dataset KNN Algorithm with k = 25.    
+
+```{r, message=FALSE, warning=FALSE,echo = TRUE}
+
+library(class)
+library(FNN)
+
+knn.binary <- sample(1:nrow(binary_df),size=nrow(binary_df)*0.7,replace = FALSE)
+
+## the normalization function is created
+nor <-function(x) { (x -min(x))/(max(x)-min(x))   }
+
+## Run normalization for predictor variables.
+binary_norm <- as.data.frame(lapply(binary_df[,c(2,3)], nor))
+
+train.binary <- binary_norm[knn.binary,] # 70% training data
+test.binary <- binary_norm[-knn.binary,] # remaining 30% test data
+
+## knn.dist calculates distance between two points. default method is euclidean. 
+kdist_binary <- knn.dist(binary_norm)
+
+
+## the creating dataframes for "credibility"
+train.binarylabels <- binary_df[knn.binary,1]
+test.binarylabels  <-binary_df[-knn.binary,1]
+
+## knn function
+model.binary =  knn(train=train.binary, test=test.binary, cl=train.binarylabels, kdist_binary, k=25)
+
+## create confusion matrix
+tab_binary <- table(model.binary,test.binarylabels)
+
+## this function divides the correct predictions by total number of predictions that tell us how accurate the model is and multiplied by 100.
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tab_binary)
+
+## Knn Model PLot
+test.binary$predicted <- model.binary
+ggplot(data = test.binary, aes(x = x, y = y, color = predicted)) + 
+    geom_point() + 
+    ggtitle("KNN Model: Binary Predicted Values")
+
+
+```
+
+The above Scatter Plot shows the predicted values for the binary test data set, with `r accuracy(tab_binary)`%.    
+
+
+Accuracy of the binary data knn model.   
+
+```{r, message=FALSE, warning=FALSE,echo =FALSE}
+
+k <- 1:100
+
+accuracy.1 <- NULL
+k.v1 <- NULL
+error.1 <- NULL
+
+knn.1 <- sample(1:nrow(binary_df),size=nrow(binary_df)*0.7,replace = FALSE)
+
+nor1 <-function(x) { (x -min(x))/(max(x)-min(x))   }
+norm1 <- as.data.frame(lapply(binary_df[,c(2,3)], nor1))
+
+train.1 <- norm1[knn.1,]
+test.1 <- norm1[-knn.1,]
+
+kdist1 <- knn.dist(norm1)
+
+train.labels1 <- binary_df[knn.1,1]
+test.labels1  <-binary_df[-knn.1,1]
+
+for(i in k){
+    model.1 =  knn(train=train.1, test=test.1, cl=train.labels1, kdist1, k=i)
+    binary.predicted <- model.1
+    er1 <- mean(test.labels1 != binary.predicted)
+    tab1 <- table(model.1,test.labels1)
+    accuracy.1[i] <- accuracy(tab1)
+    k.v1[i] <- i
+    error.1[i] <- er1
+}
+
+binaryAccuracy_df <- data.frame(k.v1, accuracy.1, error.1)
+
+df1 <- subset(binaryAccuracy_df, k.v1 %in% c(3,5,10,15,20,25))
+rownames(df1) <- c()
+kable(df1)
+
+## plot for accuracy vs. k values
+
+ggplot(data=binaryAccuracy_df, aes(x = k.v1, y = accuracy.1)) + 
+  geom_point() + geom_line(aes(colour="green")) + xlab(" K Values") + ylab("Accuracy (%)") + 
+  ggtitle("Accuracy Graph for Binary KNN Model") + ylim(90,99)
+
+## Plot error vs. k values
+ggplot(data=binaryAccuracy_df, aes(x = k.v1, y = error.1)) + 
+  geom_point() + geom_line(aes(colour="green")) + xlab(" K Values") + ylab("Error Rate") + 
+  ggtitle("Error Graph for Binary KNN Model") + ylim(0, 0.5)
+```
+   
+Trinary Dataset KNN Model with k = 25.   
+
+Same code from above is applied to the trinary dataset.   
+
+```{r, message=FALSE, warning=FALSE,echo = FALSE}
+
+knn.trinary <- sample(1:nrow(trinary_df),size=nrow(trinary_df)*0.7,replace = FALSE)
+
+
+## Run normalization for predictor variables.
+trinary_norm <- as.data.frame(lapply(trinary_df[,c(2,3)], nor))
+
+train.trinary <- trinary_norm[knn.trinary,] # 70% training data
+test.trinary <- trinary_norm[-knn.trinary,] # remaining 30% test data
+
+## knn.dist calculates distance between two points. default method is euclidean. 
+kdist_trinary <- knn.dist(trinary_norm)
+
+
+## the creating dataframes for "credibility"
+train.trinarylabels <- trinary_df[knn.trinary,1]
+test.trinarylabels  <-trinary_df[-knn.trinary,1]
+
+## knn function
+model.trinary =  knn(train=train.trinary, test=test.trinary, cl=train.trinarylabels, kdist_trinary, k=25)
+
+## create confusion matrix
+tab_trinary <- table(model.trinary,test.trinarylabels)
+
+accuracy(tab_trinary)
+
+## Knn Model PLot
+test.trinary$predicted <- model.trinary
+ggplot(data = test.trinary, aes(x = x, y = y, color = predicted)) + 
+    geom_point() + 
+    ggtitle("KNN Model: Trinary Predicted Values")
+ 
+```
+
+The above Scatter Plot shows the predicted values for the trinary test data set, with `r accuracy(tab_trinary)`%.     
+
+
+Accuracy of the trinary data knn model.   
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+accuracy.2 <- NULL
+k.v2 <- NULL
+error.2 <- NULL
+
+knn.2 <- sample(1:nrow(trinary_df),size=nrow(trinary_df)*0.7,replace = FALSE)
+
+nor2 <-function(x) { (x -min(x))/(max(x)-min(x))   }
+norm2 <- as.data.frame(lapply(trinary_df[,c(2,3)], nor2))
+
+train.2 <- norm2[knn.2,]
+test.2 <- norm2[-knn.2,]
+
+kdist2 <- knn.dist(norm2)
+
+train.labels2 <- trinary_df[knn.2,1]
+test.labels2  <-trinary_df[-knn.2,1]
+
+for(i in k){
+    model.2 =  knn(train=train.2, test=test.2, cl=train.labels2, kdist2, k=i)
+    trinary.predicted <- model.2
+    er2 <- mean(test.labels2 != trinary.predicted)
+    tab2 <- table(model.2,test.labels2)
+    accuracy.2[i] <- accuracy(tab2)
+    k.v2[i] <- i
+    error.2[i] <- er2
+}
+
+trinaryAccuracy_df <- data.frame(k.v2, accuracy.2, error.2)
+
+df2 <- subset(trinaryAccuracy_df, k.v2 %in% c(3,5,10,15,20,25))
+rownames(df2) <- c()
+kable(df2)
+
+## plot for accuracy vs. k values
+
+ggplot(data=trinaryAccuracy_df, aes(x = k.v2, y = accuracy.2)) + 
+  geom_point() + geom_line(aes(colour="green")) + xlab(" K Values") + ylab("Accuracy (%)") + 
+  ggtitle("Accuracy Graph for Trinary KNN Model") + ylim(80, 95)
+
+## Plot error vs. k values
+ggplot(data=trinaryAccuracy_df, aes(x = k.v2, y = error.2)) + 
+  geom_point() + geom_line(aes(colour="green")) + xlab(" K Values") + ylab("Error Rate") + 
+  ggtitle("Error Graph for Trinary KNN Model") + ylim(0, 0.5)
+```    
+        
+        
+       
+        
+Looking back at the plots of the data, do you think a linear classifier would work well on these datasets?   
+     
+     
+No, a linear model is not a good fit for this because the data is non-linear. Linear classification works best for problems with many variables. Our data only has two variables and is dispersed into multiple clusters all over indicating it's non-linear. Linear classifier simply won't work because it uses linear functions.
+    
+
+
+
+**Referrences**  
+  
+1. https://www.edureka.co/blog/knn-algorithm-in-r/
+2. https://rstudio-pubs-static.s3.amazonaws.com/506235_848f078b245f4fe885cea65f1528ad79.html#fitting-a-knn-model
+3. https://en.wikipedia.org/wiki/Linear_classifier
+4. https://towardsdatascience.com/k-nearest-neighbors-algorithm-with-examples-in-r-simply-explained-knn-1f2c88da405c
+
+
+
